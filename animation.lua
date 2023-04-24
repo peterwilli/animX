@@ -370,7 +370,7 @@ function Animation:render(x,y,r,sx,sy,ox,oy,...)
 	local frameX, frameY = unpack(self:getCurrentFrameOffset())
 	love.graphics.draw(
 		self:getTexture(),self:getCurrentQuad(),
-		x + frameX,y - frameY,r,sx,sy,ox,oy,...
+		x - frameX,y - frameY,r,sx,sy,ox,oy,...
 	)
 end
 
