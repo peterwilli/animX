@@ -143,6 +143,9 @@ function Animation:getCurrentFrame() return math.max(1,math.min(self.curFrame,se
 --Returns the current quad that's being rendered (a Quad)
 function Animation:getCurrentQuad() return self.frames[self:getCurrentFrame()] end
 
+--Returns the current quad that's being rendered (a Quad)
+function Animation:getCurrentFrameOffset() return self.frameOffsets[self:getCurrentFrame()] end
+
 --Returns whether or not is the animation active!
 function Animation:isActive() return self.active end
 
@@ -364,9 +367,10 @@ function Animation:render(x,y,r,sx,sy,ox,oy,...)
 	sx,sy=sx or 1, sy or 1
 	sx=self.p_flipX and -sx or sx
 	sy=self.p_flipY and -sy or sy
+	local frameX, frameY = unpack(self:getCurrentFrameOffset())
 	love.graphics.draw(
 		self:getTexture(),self:getCurrentQuad(),
-		x,y,r,sx,sy,ox,oy,...
+		x + frameX,y - frameY,r,sx,sy,ox,oy,...
 	)
 end
 

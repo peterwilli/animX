@@ -89,7 +89,7 @@ local Actor=require (LIB_PATH..'.actor')
 --]]
 function animx.newAnimation(params)
 
-	local img,quads,sw,sh,startingFrame,delay
+	local img,frameOffsets,quads,sw,sh,startingFrame,delay
 	local onAnimStart,onAnimRestart,onAnimOver,onCycleOver,onChange,onUpdate
 
 	if type(params)=='string' then
@@ -114,6 +114,8 @@ function animx.newAnimation(params)
 		local qw=params.qw or params.quadWidth or params.frameWidth or params.tileWidth
 		local qh=params.qh or params.quadHeight or params.frameHeight or params.tileHeight
 		local frames=params.frames or {}
+		frameOffsets=params.frameOffsets
+		
 		local spr=params.spr or params.spritesPerRow or params.tilesPerRow or params.quadsPerRow
 		quads=params.quads or {}
 
@@ -229,7 +231,8 @@ function animx.newAnimation(params)
 
 	local animation_obj={
 		['texture']=img,
-		['frames']=quads
+		['frames']=quads,
+		['frameOffsets']=frameOffsets
 	}
 	table.insert(animx.animObjs,setmetatable(animation_obj,{__index=Animation}))	
 	animation_obj:onAnimStart(onAnimStart):init(startingFrame,delay)
@@ -265,11 +268,12 @@ function animx.newActor(arg)
 	if type(arg)=='string' then
 		--User gave us a link to the XML file
 		local img=newImage(arg)
-		local anims=animx.newActorXML(img,removeExtension(arg,true)..'.xml')
+		local anims, frameOffsets=animx.newActorXML(img,removeExtension(arg,true)..'.xml')
 		for i in pairs(anims) do
 			actor:addAnimation(i,{
 				['img']=img,
-				['quads']=anims[i]
+				['quads']=anims[i],
+				['frameOffsets']=frameOffsets[i]
 			})
 		end
 		return actor
@@ -352,7 +356,7 @@ end
 		A table/linkhash of quads indexed by the animation name and then the frame number
 ]]--
 function animx.newActorXML(image,filename)
-	local i,t,sw,sh=1,{},image:getDimensions()
+	local i,t,f,sw,sh=1,{},{},image:getDimensions()
 	for line in love.filesystem.lines(filename) do
 		if i>1 and line:match('%a') and not line:match('<!') and line~="</TextureAtlas>" then
 			local _, frameNo = string.match(line, "name=([\"'])(.-)%1")
@@ -362,6 +366,7 @@ function animx.newActorXML(image,filename)
 			if not animName or not frameNo or frameNo<=0 then goto continue end
 
 			if not t[animName] then t[animName]={} end
+			if not f[animName] then f[animName]={} end
 			assert(not t[animName][frameNo],
 				"animX Error!! Duplicate Frames found for ("..frameNo..") for "..filename
 			)
@@ -369,13 +374,16 @@ function animx.newActorXML(image,filename)
 			local _, y = string.match(line, "y=([\"'])(.-)%1")
 			local _, width = string.match(line, "width=([\"'])(.-)%1")
 			local _, height = string.match(line, "height=([\"'])(.-)%1")
+			local _, frameX = string.match(line, "frameX=([\"'])(.-)%1")
+			local _, frameY = string.match(line, "frameY=([\"'])(.-)%1")
 			
 			t[animName][frameNo]=love.graphics.newQuad(x,y,width,height,sw,sh)
+			f[animName][frameNo]={ frameX, frameY }
 			::continue::
 		end
 		i=i+1
 	end
-	return t
+	return t, f
 end
 
 --[[
