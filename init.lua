@@ -326,7 +326,8 @@ function animx.newAnimationXML(image,filename)
 	local i,t,sw,sh=1,{},image:getDimensions()
 	for line in love.filesystem.lines(filename) do
 		if i>1 and line:match('%a') and not line:match('<!') and line~="</TextureAtlas>" then
-			local _, frameNo = string.match(line, "name=([\"'])(.-)%1")
+			local _, frameNo = string.match(line, "name=([\"']).-(%d+)%1")
+			print("frameNo", frameNo)
 			frameNo=tonumber(frameNo)
 			--Frames must start from 1!
 			if not frameNo or frameNo<=0 then goto continue end
@@ -359,9 +360,8 @@ function animx.newActorXML(image,filename)
 	local i,t,f,sw,sh=1,{},{},image:getDimensions()
 	for line in love.filesystem.lines(filename) do
 		if i>1 and line:match('%a') and not line:match('<!') and line~="</TextureAtlas>" then
-			local _, frameNo = string.match(line, "name=([\"'])(.-)%1")
-			local animName=frameNo:match('[%a ]+')
-			frameNo=tonumber(frameNo:match('%d+'))
+			local _, animName, frameNo = string.match(line, "name=([\"'])(.-)(%d+)%1")
+			frameNo=tonumber(frameNo)
 			--Frames must exist and must start from 1! Also animation name must be present
 			if not animName or not frameNo or frameNo<=0 then goto continue end
 
@@ -376,6 +376,8 @@ function animx.newActorXML(image,filename)
 			local _, height = string.match(line, "height=([\"'])(.-)%1")
 			local _, frameX = string.match(line, "frameX=([\"'])(.-)%1")
 			local _, frameY = string.match(line, "frameY=([\"'])(.-)%1")
+			frameX = frameX or 0
+			frameY = frameY or 0
 			
 			t[animName][frameNo]=love.graphics.newQuad(x,y,width,height,sw,sh)
 			f[animName][frameNo]={ frameX, frameY }
